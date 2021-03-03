@@ -1,9 +1,8 @@
 import javax.swing.*;
-import java.awt.*;
 
 public class Tetris extends JFrame
 {
-	final static int WIDTH = 768, HEIGHT = 1024;
+	final static int WIDTH = 785, HEIGHT = 1024;
 
 	public static void main(String[] args)
 	{

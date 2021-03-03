@@ -1,15 +1,14 @@
 public class Block
 {
 	private int[][] block = new int[4][4];
-	private int x, y;
-	private int rgb;
-
+	private int x, y, r;
+	private final int rgb;
 	final public int size = 64;
 
-	public Block(int width, int height)
+	public Block(int width)
 	{
-		y = 0;
-		x = (int) (Math.random() * width / size);
+		y = -1 * size;
+		x = ((int) ((Math.random() * (width - size * 4)) / size)) * size; // Yikes
 		rgb = (int) (Math.random() * 256 * 256 * 256);
 
 		selectRandomBlock();
@@ -21,7 +20,7 @@ public class Block
 
 		if(r == 0) // I shape
 		{
-			block = new int[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
+			block = new int[][]{{0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}};
 		}
 		else if(r == 1) // L shape
 		{
@@ -56,9 +55,30 @@ public class Block
 		return rgb;
 	}
 
-	public void setCoords(int[] coords)
+	public void move(int direction)
 	{
-		x = coords[0];
-		y = coords[1];
+		if(direction == 0) // Move down
+		{
+			y += size;
+		}
+		else
+		{
+			x += size * direction; // direction = -1 -> left, direction = 1 -> right
+		}
+	}
+
+	public void rotate() // Rotate for -90 deg
+	{
+		int[][] newArray = new int[4][4];
+		for(int j = 0; j < 4; j++)
+		{
+			int[] temp = new int[4];
+			for(int i = 3; i > -1; i--)
+			{
+				temp[3 - i] = block[i][j];
+			}
+			newArray[j] = temp;
+		}
+		block = newArray;
 	}
 }
