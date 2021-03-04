@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 //TODO Clear line if its full
+//TODO Game over...
 public class Board extends JPanel implements ActionListener, KeyListener
 {
 	Timer timer = new Timer(1000, this);
@@ -160,7 +161,20 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		if(direction == -1)
 		{
 			int checkLeft = rowColumn[1] + leftMost - 1;
-			return checkLeft >= 0;
+			if(checkLeft < 0)
+			{
+				return false;
+			}
+
+			// TODO: Fix going left/right into blocks...
+			for(int i = 0; i < 4; i++)
+			{
+				int mapY = rowColumn[0] + i;
+				if(mapY > -1 && map[mapY][checkLeft] == 1 && checkLeft < 4 && piece[i][checkLeft + 1] == 1)
+				{
+					return false;
+				}
+			}
 		}
 		else if(direction == 1)
 		{
