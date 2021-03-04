@@ -53,16 +53,16 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			block.move(0);
 		}
 
-		// Print map TODO DELETE
-		for(int i = 0; i < map.length; i++)
-		{
-			for(int j = 0; j < map[i].length; j++)
-			{
-				System.out.print(map[i][j] + " ");
-			}
-			System.out.println();
-		}
-		System.out.println("=========================================================");
+//		// Print map TODO DELETE
+//		for(int i = 0; i < map.length; i++)
+//		{
+//			for(int j = 0; j < map[i].length; j++)
+//			{
+//				System.out.print(map[i][j] + " ");
+//			}
+//			System.out.println();
+//		}
+//		System.out.println("=========================================================");
 	}
 
 	@Override
@@ -76,15 +76,15 @@ public class Board extends JPanel implements ActionListener, KeyListener
 	private void render(Graphics g)
 	{
 		g.setColor(Color.white);
-//		// Testing....
-//		for(int i = 0; i < mapHeight; i++)
-//		{
-//			g.drawLine(0, i * block.size, mapWidth * block.size, i * block.size);
-//		}
-//		for(int j = 0; j <= mapWidth; j++)
-//		{
-//			g.drawLine(j * block.size, 0, j * block.size, mapHeight * block.size);
-//		}
+		// Testing....
+		for(int i = 0; i < mapHeight; i++)
+		{
+			g.drawLine(0, i * block.size, mapWidth * block.size, i * block.size);
+		}
+		for(int j = 0; j <= mapWidth; j++)
+		{
+			g.drawLine(j * block.size, 0, j * block.size, mapHeight * block.size);
+		}
 
 		//Draw floor
 		for(int i = 0; i < map.length; i++)
@@ -93,7 +93,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			{
 				if(map[i][j] != 0)
 				{
-					int[] coords = convertIndexCartesian(i, j);
+					int[] coords = convertIndexToCartesian(i, j);
 					g.fillRect(coords[0], coords[1], block.size, block.size);
 				}
 			}
@@ -117,14 +117,14 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		}
 	}
 
-	public int[] convertCartesianIndex(int[] coords) // coords = {x, y}
+	public int[] convertCartesianToIndex(int[] coords) // coords = {x, y}
 	{
 		int column = coords[0] / block.size;
 		int row = coords[1] / block.size;
 		return new int[]{row, column};
 	}
 
-	public int[] convertIndexCartesian(int row, int column)
+	public int[] convertIndexToCartesian(int row, int column)
 	{
 		int x = column * block.size;
 		int y = row * block.size;
@@ -133,11 +133,8 @@ public class Board extends JPanel implements ActionListener, KeyListener
 
 	public boolean collisionCheck(int direction)
 	{
-		int[] rowColumn = convertCartesianIndex(block.getCoords()); // top left y, x indices
+		int[] rowColumn = convertCartesianToIndex(block.getCoords()); // top left y, x indices
 		int[][] piece = block.getPiece();
-
-		int lastRow = 0; //last row which contains blocks
-		int[] lastColumns = new int[4]; // which blocks are on the last row
 
 		int leftMost = 4; // set it to max value
 		int rightMost = 0; // set it to min value
@@ -148,9 +145,6 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			{
 				if(piece[i][j] == 1)
 				{
-					lastColumns[j] = 1;
-					lastRow = i;
-
 					if(j < leftMost)
 					{
 						leftMost = j;
@@ -163,34 +157,6 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			}
 		}
 
-		int checkRow = rowColumn[0] + lastRow + 1;
-		boolean collision = false; // bottom collision
-		for(int i = 0; i < 4; i++)
-		{
-			if(i > mapWidth - 1)
-			{
-				break;
-			}
-			if(map[checkRow][i] == 1 && lastColumns[i] == 1)
-			{
-				// TODO FIX BUG!!!!!!!!!!!!!!!!!!
-				for(int y = 0; y < 4; y++)
-				{
-					for(int x = 0; x < 4; x++)
-					{
-						if(piece[y][x] == 1)
-						{
-							map[y + rowColumn[0]][x + rowColumn[1]] = 1; // Make block part of the map
-						}
-					}
-				}
-				// Create a tetrominoe
-				block = new Block(getSize().width);
-
-				return false;
-			}
-		}
-
 		if(direction == -1)
 		{
 			int checkLeft = rowColumn[1] + leftMost - 1;
@@ -200,6 +166,40 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		{
 			int checkRight = rowColumn[1] + rightMost + 1;
 			return checkRight < mapWidth;
+		}
+
+
+		// Ground check
+		for(int i = 0; i < 4; i++)
+		{
+			for(int j = 0; j < 4; j++)
+			{
+				if(piece[i][j] == 1)
+				{
+					int mapY = rowColumn[0] + 1 + i;
+					int mapX = rowColumn[1] + j;
+
+					if(mapY > 0 && mapY < mapHeight && mapX >= 0 && mapX < mapWidth)
+					{
+						if(map[mapY][mapX] != 0)
+						{
+							for(int x = 0; x < 4; x++)
+							{
+								for(int y = 0; y < 4; y++)
+								{
+									if(piece[y][x] == 1)
+									{
+										map[rowColumn[0] + y][rowColumn[1] + x] = 1;
+									}
+								}
+							}
+							// Create a tetromino
+							block = new Block(getSize().width);
+							return false;
+						}
+					}
+				}
+			}
 		}
 		return true;
 	}
