@@ -1,7 +1,7 @@
 public class Block
 {
 	private int[][] block = new int[4][4];
-	private int x, y, r;
+	private int x, y;
 	private final int rgb;
 	final public int size = 64;
 
@@ -67,7 +67,12 @@ public class Block
 		}
 	}
 
-	public void rotate() // Rotate for -90 deg
+	public void setPiece(int[][] block)
+	{
+		this.block = block;
+	}
+
+	public int[][] rotate() // Rotate for -90 deg
 	{
 		int[][] newArray = new int[4][4];
 		for(int j = 0; j < 4; j++)
@@ -79,6 +84,6 @@ public class Block
 			}
 			newArray[j] = temp;
 		}
-		block = newArray;
+		return newArray;
 	}
 }
