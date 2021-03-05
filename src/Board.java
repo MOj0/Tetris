@@ -6,7 +6,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Arrays;
 
-//TODO Game over...
 public class Board extends JPanel implements ActionListener, KeyListener
 {
 	Timer timer = new Timer(1000, this);
@@ -15,6 +14,9 @@ public class Board extends JPanel implements ActionListener, KeyListener
 	int mapWidth, mapHeight;
 	int key;
 	int[] fullBoard;
+	int state; // 1 - inGame, 2 - GameOver
+	int score;
+	Font font;
 
 	public Board(int width, int height)
 	{
@@ -39,6 +41,9 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		fullBoard = new int[mapWidth];
 		Arrays.fill(fullBoard, 1);
 
+		font = new Font("TimesRoman", Font.BOLD, 24);
+		score = 0;
+		state = 1;
 		//Start a 1 second timer
 		timer.start();
 	}
@@ -57,18 +62,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			block.move(0);
 		}
 
-		checkLine();
-
-//		// Print map TODO DELETE
-//		for(int i = 0; i < map.length; i++)
-//		{
-//			for(int j = 0; j < map[i].length; j++)
-//			{
-//				System.out.print(map[i][j] + " ");
-//			}
-//			System.out.println();
-//		}
-//		System.out.println("=========================================================");
+		checkFullLine();
 	}
 
 	@Override
@@ -81,64 +75,99 @@ public class Board extends JPanel implements ActionListener, KeyListener
 
 	private void render(Graphics g)
 	{
-		g.setColor(Color.white);
-//		// Testing.... TODO DELETE
-//		for(int i = 0; i < mapHeight; i++)
-//		{
-//			g.drawLine(0, i * block.size, mapWidth * block.size, i * block.size);
-//		}
-//		for(int j = 0; j <= mapWidth; j++)
-//		{
-//			g.drawLine(j * block.size, 0, j * block.size, mapHeight * block.size);
-//		}
-
-		//Draw floor
-		for(int i = 0; i < map.length; i++)
+		if(state == 1)
 		{
-			for(int j = 0; j < map[i].length; j++)
+			// Draw grid
+			g.setColor(new Color(255, 255, 255, 110));
+			for(int i = 0; i < mapHeight; i++)
 			{
-				if(map[i][j] != 0)
-				{
-					int[] coords = convertIndexToCartesian(i, j);
-					g.setColor(Color.white);
-					g.fillRect(coords[0], coords[1], block.size, block.size);
+				g.drawLine(0, i * block.size, mapWidth * block.size, i * block.size);
+			}
+			for(int j = 0; j <= mapWidth; j++)
+			{
+				g.drawLine(j * block.size, 0, j * block.size, mapHeight * block.size);
+			}
 
-					g.setColor(Color.black);
-					g.drawRect(coords[0], coords[1], block.size, block.size);
+			//Draw floor
+			for(int i = 0; i < map.length; i++)
+			{
+				for(int j = 0; j < map[i].length; j++)
+				{
+					if(map[i][j] != 0)
+					{
+						int[] coords = convertIndexToCartesian(i, j);
+						g.setColor(Color.white);
+						g.fillRect(coords[0], coords[1], block.size, block.size);
+
+						g.setColor(Color.black);
+						g.drawRect(coords[0], coords[1], block.size, block.size);
+					}
 				}
 			}
+
+			// Draw block
+			int[] coords = block.getCoords();
+			int size = block.size;
+			int[][] piece = block.getPiece();
+
+			for(int i = 0; i < piece.length; i++)
+			{
+				for(int j = 0; j < piece[i].length; j++)
+				{
+					if(piece[i][j] == 1)
+					{
+						g.setColor(new Color(block.getRGB()));
+						g.fillRect(coords[0] + j * size, coords[1] + i * size, size, size);
+
+						g.setColor(Color.white);
+						g.drawRect(coords[0] + j * size, coords[1] + i * size, size, size);
+					}
+				}
+			}
+
+			// Display score
+			g.drawString("Score: " + score, 10, 40);
+
 		}
-
-		// Draw block
-		int[] coords = block.getCoords();
-		int size = block.size;
-		int[][] piece = block.getPiece();
-
-		for(int i = 0; i < piece.length; i++)
+		else if(state == 2)
 		{
-			for(int j = 0; j < piece[i].length; j++)
-			{
-				if(piece[i][j] == 1)
-				{
-					g.setColor(new Color(block.getRGB()));
-					g.fillRect(coords[0] + j * size, coords[1] + i * size, size, size);
-
-					g.setColor(Color.white);
-					g.drawRect(coords[0] + j * size, coords[1] + i * size, size, size);
-				}
-			}
+			g.setColor(Color.white);
+			g.setFont(font);
+			g.drawString("Game Over", getWidth() / 2 - 50, getHeight() / 2 - 30);
+			g.drawString("Press R to restart", getWidth() / 2 - 75, getHeight() / 2);
+			g.drawString("Score: " + score, getWidth() / 2 - 50, getHeight() / 2 + 30);
 		}
 	}
 
 
-	public void checkLine()
+	public void checkFullLine()
 	{
 		for(int i = 0; i < mapHeight - 1; i++)
 		{
 			if(Arrays.equals(map[i], fullBoard))
 			{
 				Arrays.fill(map[i], 0);
-				//TODO Make blocks fall
+
+				for(int j = i - 1; j > -1; j--)
+				{
+					for(int k = 0; k < mapWidth; k++)
+					{
+						if(map[j][k] == 1)
+						{
+							map[j][k] = 0;
+
+							int l = j + 1;
+							while(map[l][k] == 0)
+							{
+								l++;
+							}
+							l--;
+							map[l][k] = 1;
+
+							score += mapWidth * 10;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -201,7 +230,13 @@ public class Board extends JPanel implements ActionListener, KeyListener
 							{
 								if(piece[y][x] == 1)
 								{
-									map[rowColumn[0] + y][rowColumn[1] + x] = 1;
+									if(rowColumn[0] + y <= 0) // Game Over
+									{
+										state = 2;
+										timer.stop();
+										return false;
+									}
+									map[rowColumn[0] + y][rowColumn[1] + x] = 1; // Make block part of the map
 								}
 							}
 						}
@@ -213,11 +248,6 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			}
 		}
 
-		if(rowColumn[0] < 0) // Block just spawned
-		{
-			return true;
-		}
-
 		if(direction == -1) // left check
 		{
 			int checkLeft = rowColumn[1] + leftMost - 1;
@@ -226,6 +256,10 @@ public class Board extends JPanel implements ActionListener, KeyListener
 				return false;
 			}
 
+			if(rowColumn[0] < 0) // Block just spawned
+			{
+				return true;
+			}
 			for(int i = 0; i < 4; i++) // Check map to the left
 			{
 				if(map[rowColumn[0] + i][checkLeft] == 1 && piece[i][leftMost] == 1)
@@ -242,6 +276,11 @@ public class Board extends JPanel implements ActionListener, KeyListener
 				return false;
 			}
 
+
+			if(rowColumn[0] < 0) // Block just spawned
+			{
+				return true;
+			}
 			for(int i = 0; i < 4; i++) // Check map to the right
 			{
 				if(map[rowColumn[0] + i][checkRight] == 1 && piece[i][rightMost] == 1)
@@ -285,23 +324,27 @@ public class Board extends JPanel implements ActionListener, KeyListener
 	{
 		key = e.getKeyCode();
 
-		if(key == 37 && collisionCheck(-1)) // move left
+		if(state == 1)
 		{
-			block.move(-1);
+			if(key == 37 && collisionCheck(-1)) // move left
+			{
+				block.move(-1);
+			}
+			else if(key == 39 && collisionCheck(1)) // move right
+			{
+				block.move(1);
+			}
+			else if(key == 40) // move down
+			{
+				score++;
+				update();
+			}
+			else if(key == 38 && collisionCheck(2)) // rotate
+			{
+				block.setPiece(block.rotate());
+			}
 		}
-		else if(key == 39 && collisionCheck(1)) // move right
-		{
-			block.move(1);
-		}
-		else if(key == 40) // move down
-		{
-			update();
-		}
-		else if(key == 38 && collisionCheck(2)) // rotate
-		{
-			block.setPiece(block.rotate());
-		}
-		else if(key == 82) // R
+		if(key == 82) // R
 		{
 			timer.stop();
 
@@ -318,6 +361,8 @@ public class Board extends JPanel implements ActionListener, KeyListener
 				Arrays.fill(map[i], value);
 			}
 
+			score = 0;
+			state = 1;
 			//Start a 1 second timer
 			timer.start();
 		}
