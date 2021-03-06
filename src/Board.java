@@ -8,16 +8,13 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.Arrays;
 
-//TODO ClearLine doesnt work right???????????
-//TODO Make floor colorful
 public class Board extends JPanel implements ActionListener, KeyListener
 {
 	Timer timer = new Timer(1000, this);
 	Block block;
-	int[][] map;
+	Color[][] map;
 	int mapWidth, mapHeight;
 	int key;
-	int[] fullBoard;
 	int state; // 1 - inGame, 2 - GameOver
 	int score;
 	Font font;
@@ -37,13 +34,11 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		// Variables
 		mapWidth = width / block.size;
 		mapHeight = height / block.size;
-		map = new int[mapHeight][mapWidth];
+		map = new Color[mapHeight][mapWidth];
 		for(int i = 0; i < map[0].length; i++)
 		{
-			map[map.length - 1][i] = 1;
+			map[mapHeight - 1][i] = new Color(255, 255, 255);
 		}
-		fullBoard = new int[mapWidth];
-		Arrays.fill(fullBoard, 1);
 
 		font = new Font("TimesRoman", Font.BOLD, 24);
 		score = 0;
@@ -70,6 +65,19 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		}
 
 		checkFullLine();
+
+		if(score > 5000)
+		{
+			timer.setDelay(500);
+		}
+		else if(score > 2500)
+		{
+			timer.setDelay(600);
+		}
+		else if(score > 1000)
+		{
+			timer.setDelay(800);
+		}
 	}
 
 	@Override
@@ -95,18 +103,18 @@ public class Board extends JPanel implements ActionListener, KeyListener
 				g.drawLine(j * block.size, 0, j * block.size, mapHeight * block.size);
 			}
 
-			//Draw floor
+			//Draw map
 			for(int i = 0; i < map.length; i++)
 			{
 				for(int j = 0; j < map[i].length; j++)
 				{
-					if(map[i][j] != 0)
+					if(map[i][j] != null)
 					{
 						int[] coords = convertIndexToCartesian(i, j);
-						g.setColor(Color.white);
+						g.setColor(map[i][j]);
 						g.fillRect(coords[0], coords[1], block.size, block.size);
 
-						g.setColor(Color.black);
+						g.setColor(Color.white);
 						g.drawRect(coords[0], coords[1], block.size, block.size);
 					}
 				}
@@ -134,7 +142,6 @@ public class Board extends JPanel implements ActionListener, KeyListener
 
 			// Display score
 			g.drawString("Score: " + score, 10, 40);
-
 		}
 		else if(state == 2)
 		{
@@ -151,29 +158,35 @@ public class Board extends JPanel implements ActionListener, KeyListener
 	{
 		for(int i = 0; i < mapHeight - 1; i++)
 		{
-			if(Arrays.equals(map[i], fullBoard))
+			for(int l = 0; l < mapWidth; l++)
 			{
-				Arrays.fill(map[i], 0);
-
-				for(int j = i - 1; j > -1; j--)
+				if(map[i][l] == null)
 				{
-					for(int k = 0; k < mapWidth; k++)
+					break;
+				}
+				if(l == mapWidth - 1)
+				{
+					Arrays.fill(map[i], null);
+
+					for(int j = i - 1; j > -1; j--)
 					{
-						if(map[j][k] == 1)
+						for(int k = 0; k < mapWidth; k++)
 						{
-							map[j][k] = 0;
-
-							int l = j + 1;
-							while(map[l][k] == 0)
+							if(map[j][k] != null)
 							{
-								l++;
-							}
-							l--;
-							map[l][k] = 1;
+								int m = j + 1;
+								while(map[m][k] == null)
+								{
+									m++;
+								}
+								m--;
+								map[m][k] = map[j][k];
 
-							score += mapWidth * 10;
+								map[j][k] = null;
+							}
 						}
 					}
+					score += mapWidth * 10;
 				}
 			}
 		}
@@ -229,7 +242,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 					int mapY = rowColumn[0] + 1 + i; // + 1 to simulate another fall
 					int mapX = rowColumn[1] + j;
 
-					if(mapY > 0 && mapY < mapHeight && mapX >= 0 && mapX < mapWidth && map[mapY][mapX] != 0)
+					if(mapY > 0 && mapY < mapHeight && mapX >= 0 && mapX < mapWidth && map[mapY][mapX] != null)
 					{
 						for(int x = 0; x < 4; x++)
 						{
@@ -243,7 +256,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 										timer.stop();
 										return false;
 									}
-									map[rowColumn[0] + y][rowColumn[1] + x] = 1; // Make block part of the map
+									map[rowColumn[0] + y][rowColumn[1] + x] = new Color(block.getRGB()); // Make block part of the map
 								}
 							}
 						}
@@ -269,7 +282,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			}
 			for(int i = 0; i < 4; i++) // Check map to the left
 			{
-				if(map[rowColumn[0] + i][checkLeft] == 1 && piece[i][leftMost] == 1)
+				if(map[rowColumn[0] + i][checkLeft] != null && piece[i][leftMost] == 1)
 				{
 					return false;
 				}
@@ -283,14 +296,13 @@ public class Board extends JPanel implements ActionListener, KeyListener
 				return false;
 			}
 
-
 			if(rowColumn[0] < 0) // Block just spawned
 			{
 				return true;
 			}
 			for(int i = 0; i < 4; i++) // Check map to the right
 			{
-				if(map[rowColumn[0] + i][checkRight] == 1 && piece[i][rightMost] == 1)
+				if(map[rowColumn[0] + i][checkRight] != null && piece[i][rightMost] == 1)
 				{
 					return false;
 				}
@@ -309,7 +321,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 						int mapY = rowColumn[0] + i;
 						int mapX = rowColumn[1] + j;
 
-						if(mapY < 0 || mapX < 0 || mapX >= mapWidth || map[mapY][mapX] != 0)
+						if(mapY < 0 || mapX < 0 || mapX >= mapWidth || map[mapY][mapX] != null)
 						{
 							return false;
 						}
@@ -360,10 +372,10 @@ public class Board extends JPanel implements ActionListener, KeyListener
 
 			for(int i = 0; i < map.length; i++)
 			{
-				int value = 0;
+				Color value = null;
 				if(i == map.length - 1)
 				{
-					value = 1;
+					value = new Color(255, 255, 255);
 				}
 				Arrays.fill(map[i], value);
 			}
@@ -371,6 +383,7 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			score = 0;
 			state = 1;
 			//Start a 1 second timer
+			timer.setDelay(1000);
 			timer.start();
 		}
 		repaint();
@@ -391,9 +404,8 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			clip.open(audioInputStream);
 			// Volume Control
 			FloatControl volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-			volumeControl.setValue(-10.0f); // Reduce volume by 10 decibels.
+			volumeControl.setValue(-15.0f); // Reduce volume by 15 decibels.
 			clip.loop(Clip.LOOP_CONTINUOUSLY);
-//			clip.start();
 		}
 		catch(Exception ex)
 		{
