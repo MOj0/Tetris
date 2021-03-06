@@ -1,11 +1,15 @@
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
 import java.util.Arrays;
 
+//TODO ClearLine doesnt work right???????????
+//TODO Make floor colorful
 public class Board extends JPanel implements ActionListener, KeyListener
 {
 	Timer timer = new Timer(1000, this);
@@ -44,6 +48,9 @@ public class Board extends JPanel implements ActionListener, KeyListener
 		font = new Font("TimesRoman", Font.BOLD, 24);
 		score = 0;
 		state = 1;
+
+		playSound("Tetris 99 - Main Theme.wav");
+
 		//Start a 1 second timer
 		timer.start();
 	}
@@ -372,5 +379,25 @@ public class Board extends JPanel implements ActionListener, KeyListener
 	@Override
 	public void keyReleased(KeyEvent e)
 	{
+	}
+
+
+	public static void playSound(String path)
+	{
+		try
+		{
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(path));
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			// Volume Control
+			FloatControl volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+			volumeControl.setValue(-10.0f); // Reduce volume by 10 decibels.
+			clip.start();
+		}
+		catch(Exception ex)
+		{
+			System.out.println("Error with playing sound.");
+			ex.printStackTrace();
+		}
 	}
 }
