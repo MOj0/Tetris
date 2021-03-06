@@ -392,7 +392,8 @@ public class Board extends JPanel implements ActionListener, KeyListener
 			// Volume Control
 			FloatControl volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
 			volumeControl.setValue(-10.0f); // Reduce volume by 10 decibels.
-			clip.start();
+			clip.loop(Clip.LOOP_CONTINUOUSLY);
+//			clip.start();
 		}
 		catch(Exception ex)
 		{
